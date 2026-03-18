@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  # Job 1: Prometheus monitors itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Job 2: Prometheus monitors the MikroTik Router
+  - job_name: 'mktxp'
+    static_configs:
+      - targets: ['mktxp:49090']
+
+  # Job 2: Prometheus monitors the VictoriaMetrics Cluster components
+  - job_name: 'vm-cluster-health'
+    static_configs:
+      - targets: 
+          - 'vminsert:8480'
+          - 'vmselect:8481'
+          - 'vmstorage-1:8482'
+          - 'vmstorage-2:8482'
+
+# This sends all the scraped metrics above to your VM Cluster
+remote_write:
+  - url: "http://vminsert:8480/insert/0/prometheus/api/v1/write"

@@ -1,0 +1,4 @@
+scrape_configs:
+  - job_name: 'mac-system'
+    static_configs:
+      - targets: ['localhost:9100'] # node_exporter default port

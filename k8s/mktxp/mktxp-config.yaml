@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mktxp-exporter
+  annotations:
+    prometheus.io/port: "49090"
+    prometheus.io/scrape: "true"
+spec:
+  selector:
+    app: mktxp-exporter
+  ports:
+  - port: 49090
+    targetPort: 49090
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mktxp-exporter
+spec:
+  selector:
+    matchLabels:
+      app: mktxp-exporter
+  template:
+    metadata:
+      labels:
+        app: mktxp-exporter
+    spec:
+      containers:
+      - name: mktxp-exporter
+        image: ghcr.io/akpw/mktxp:latest
+        env:
+          - name: MKT_USER
+            valueFrom:
+              secretKeyRef:
+                name: mktxp-credentials
+                key: MKT_USER
+          - name: MKT_PASS
+            valueFrom:
+              secretKeyRef:
+                name: mktxp-credentials
+                key: MKT_PASS
+          - name: MKT_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                name: mktxp-credentials
+                key: MKT_HOSTNAME
+        command: ["sh", "-c"]
+        args:
+          - |
+            cp /config-template/* /tmp/
+            sed -i "s/MKT_USER_PLACEHOLDER/$MKT_USER/g" /tmp/mktxp.conf
+            sed -i "s/MKT_PASS_PLACEHOLDER/$MKT_PASS/g" /tmp/mktxp.conf
+            sed -i "s/MKT_HOSTNAME_PLACEHOLDER/$MKT_HOSTNAME/g" /tmp/mktxp.conf
+            mktxp --cfg-dir /tmp export
+        ports:
+        - containerPort: 49090
+        volumeMounts:
+          - name: config-template-vol
+            mountPath: /config-template
+      volumes:
+        - name: config-template-vol
+          configMap:
+            name: mktxp-config-template

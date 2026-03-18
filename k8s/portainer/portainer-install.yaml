@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: portainer
+spec:
+  type: LoadBalancer  # This makes it accessible at localhost:9000
+  ports:
+    - port: 9000
+      targetPort: 9000
+  selector:
+    app: portainer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: portainer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: portainer
+  template:
+    metadata:
+      labels:
+        app: portainer
+    spec:
+      containers:
+      - name: portainer
+        image: portainer/portainer-ce:latest
+        ports:
+          - containerPort: 9000

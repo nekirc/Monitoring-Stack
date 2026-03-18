@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vmstorage
+spec:
+  clusterIP: None
+  ports:
+    - port: 8400
+      name: insert
+    - port: 8401
+      name: select
+    - port: 8482
+      name: http
+  selector:
+    app: vmstorage
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vmstorage
+spec:
+  serviceName: "vmstorage"
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vmstorage
+  template:
+    metadata:
+      labels:
+        app: vmstorage
+    spec:
+      containers:
+      - name: vmstorage
+        image: victoriametrics/vmstorage:latest
+        args: ["--storageDataPath=/storage", "--vminsertAddr=:8400", "--vmselectAddr=:8401"]
+        ports:
+        - containerPort: 8482
+        volumeMounts:
+        - name: data
+          mountPath: /storage
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 5Gi
