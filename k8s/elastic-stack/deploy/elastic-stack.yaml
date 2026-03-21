@@ -44,3 +44,33 @@ spec:
       port: 5601
       targetPort: 5601
   type: LoadBalancer
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: reveal-password-sa
+  namespace: elastic-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: reveal-password-role
+  namespace: elastic-system
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: reveal-password-rb
+  namespace: elastic-system
+subjects:
+- kind: ServiceAccount
+  name: reveal-password-sa
+  namespace: elastic-system
+roleRef:
+  kind: Role
+  name: reveal-password-role
+  apiGroup: rbac.authorization.k8s.io
