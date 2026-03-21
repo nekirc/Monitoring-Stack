@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: reveal-password
+  namespace: elastic-system
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  template:
+    spec:
+      containers:
+      - name: reveal
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Sync Complete. Fetching password..."
+          kubectl get secret elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d
+          echo -e "\nLogin at: https://localhost:5601"
+      restartPolicy: Never
