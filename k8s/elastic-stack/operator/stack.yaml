@@ -1,14 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: elastic-stack-9-3
+  name: elastic-stack-resources
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   source:
     repoURL: 'https://github.com/nekirc/Monitoring-Stack.git'
     targetRevision: init-script
-    path: k8s/elastic-stack/operator
+    path: k8s/elastic-stack/deploy
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: elastic-system
@@ -16,5 +18,3 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true

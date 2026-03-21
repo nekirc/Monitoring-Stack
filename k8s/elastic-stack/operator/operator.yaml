@@ -1,14 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: elastic-stack-9-3
+  name: eck-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git'
-    targetRevision: init-script
-    path: k8s/elastic-stack/operator
+    repoURL: 'https://helm.elastic.co'
+    chart: eck-operator
+    targetRevision: 3.3.1
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: elastic-system
