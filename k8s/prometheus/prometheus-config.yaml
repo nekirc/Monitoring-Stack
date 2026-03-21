@@ -165,6 +165,8 @@ data:
             target_label: pod
 
       - job_name: 'argocd'
+        tls_config:
+          insecure_skip_verify: true
         kubernetes_sd_configs:
           - role: endpoints
             namespaces:
