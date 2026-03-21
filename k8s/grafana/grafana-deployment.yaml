@@ -23,7 +23,7 @@ spec:
         args:
           - |
             mkdir -p /var/lib/grafana/dashboards
-            for id in 19268 18283 11176 13679 14584 1860; do
+            for id in 19268 18283 11176 13679 14584 20138; do
               echo "Downloading dashboard $id..."
               curl -sL "https://grafana.com/api/dashboards/$id/revisions/1/download" -o "/var/lib/grafana/dashboards/$id.json"
               # Ensure all datasource template variables in the JSON are set to VictoriaMetrics
@@ -72,3 +72,4 @@ spec:
     - port: 3000
   selector:
     app: grafana
+
