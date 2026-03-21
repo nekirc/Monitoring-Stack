@@ -3,17 +3,15 @@ kind: Application
 metadata:
   name: portainer
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git' # Replace with your repo URL
+    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git'
     targetRevision: init-script
-    path: Monitoring-Stack/k8s/portainer
+    path: k8s/portainer
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: monitoring
+    namespace: default
   syncPolicy:
     automated:
       prune: true

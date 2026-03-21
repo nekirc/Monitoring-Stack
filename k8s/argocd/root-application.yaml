@@ -3,14 +3,12 @@ kind: Application
 metadata:
   name: monitoring-stack-root
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git' # Replace with your repo URL
-    targetRevision: HEAD
-    path: Monitoring-Stack/k8s/argocd/apps
+    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git'
+    targetRevision: init-script
+    path: k8s/argocd/apps
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: argocd

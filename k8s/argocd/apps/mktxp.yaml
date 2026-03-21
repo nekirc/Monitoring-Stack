@@ -1,16 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: mktxp
+  name: mktxp-exporter
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git' # Replace with your repo URL
+    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git'
     targetRevision: init-script
-    path: Monitoring-Stack/k8s/mktxp
+    path: k8s/mktxp
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: monitoring

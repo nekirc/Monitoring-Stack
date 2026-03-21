@@ -3,14 +3,12 @@ kind: Application
 metadata:
   name: victoriametrics-cluster
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
-    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git' # Replace with your repo URL
+    repoURL: 'https://github.com/nekirc/Monitoring-Stack.git'
     targetRevision: init-script
-    path: Monitoring-Stack/k8s/victoria-metrics
+    path: k8s/victoria-metrics
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: monitoring
