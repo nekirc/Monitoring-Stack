@@ -1,136 +1,166 @@
 # Monitoring Stack
 
-A comprehensive monitoring solution utilizing **VictoriaMetrics** for high-performance time-series storage, **Prometheus** for scraping, **Grafana** for visualization, and specialized exporters like **MKTXP** for MikroTik devices.
+A comprehensive, GitOps-ready monitoring and observability solution providing two primary stacks: a lightweight **VictoriaMetrics + Prometheus** stack for metrics, and a full **Elastic Stack (ECK)** for logs, APM, and advanced telemetry.
 
-## 🏗️ Architecture & Data Flow
+## 🏗️ Architecture & Data Flows
 
-This stack is designed as a distributed monitoring system. It supports both Docker-based local development and production-ready Kubernetes deployments.
-
-### Data Flow Diagram
+### 1. Core Monitoring Stack (Metrics)
+This stack focuses on high-performance time-series data using VictoriaMetrics as the storage backbone.
 
 ```mermaid
 graph TD
-    subgraph "Data Sources"
+    subgraph "External Sources"
         MKT[MikroTik Router]
+        MAC[Local macOS]
+    end
+
+    subgraph "Kubernetes: monitoring namespace"
+        direction TB
+        MKTXP[MKTXP Exporter]
+        PROM[Prometheus Scraper]
+        KSM[Kube-State-Metrics]
         NODE[Node Exporter]
-        SYS[System Metrics]
-    end
-
-    subgraph "Exporters / Agents"
-        MKTXP[mktxp Exporter]
-        VMA[vmagent Agent]
-        PROM[Prometheus]
-    end
-
-    subgraph "VictoriaMetrics Cluster"
-        VMI[vminsert - Ingestion]
-        VMS[vmstorage - Database]
-        VMQ[vmselect - Query Engine]
-    end
-
-    subgraph "Visualization"
+        
+        subgraph "VictoriaMetrics Cluster"
+            VMI[vminsert - Ingestion]
+            VMS[vmstorage - DB]
+            VMQ[vmselect - Query]
+        end
+        
         GRAF[Grafana]
+        PORT[Portainer]
     end
 
     MKT -->|API| MKTXP
     MKTXP -->|Scrape| PROM
+    KSM -->|Scrape| PROM
     NODE -->|Scrape| PROM
-    SYS -->|Scrape| VMA
-    
     PROM -->|Remote Write| VMI
-    VMA -->|Remote Write| VMI
+    
+    MAC -->|vmagent| VMI
     
     VMI --> VMS
     VMS --> VMQ
     VMQ --> GRAF
 ```
 
----
+### 2. Elastic Stack (Logs, APM, OTel)
+Managed by the **Elastic Cloud on Kubernetes (ECK) Operator**, this stack provides deep observability.
 
-## 🚀 Components
+```mermaid
+graph TD
+    subgraph "Elastic System Namespace"
+        direction TB
+        ECK[ECK Operator]
+        ES[Elasticsearch]
+        KB[Kibana]
+        FS[Fleet Server]
+        
+        OTEL[OTel Collector Agent]
+        SYNT[Synthetics Agent]
+        GEN[OTel Traffic Generator]
+    end
 
-### 1. VictoriaMetrics Cluster
-The backbone of the storage layer, split into three functional parts:
-*   **vmstorage**: Stores the raw data and keeps track of the metadata. Configured for replication (factor 2) in this stack.
-*   **vminsert**: Proxies the incoming data to `vmstorage` nodes using a hashing algorithm.
-*   **vmselect**: Fetches data from `vmstorage` nodes to serve queries from Grafana.
-
-### 2. Prometheus
-Acting as the primary scraper, Prometheus:
-*   Scrapes itself for health monitoring.
-*   Scrapes **MKTXP** for MikroTik metrics.
-*   Uses `remote_write` to push all collected metrics to the VictoriaMetrics `vminsert` endpoint.
-
-### 3. MKTXP (MikroTik Exporter)
-A specialized exporter that connects to MikroTik routers via WinBox/API ports to retrieve interface statistics, system health, and wireless metrics.
-
-### 4. Grafana
-Pre-configured with:
-*   **VictoriaMetrics** as the default datasource.
-*   **Provisioned Dashboards**: "Node Exporter Full" for system health and "VictoriaMetrics - cluster" for monitoring the storage itself.
-
-### 5. vmagent (Standalone Agent)
-A lightweight alternative or supplement to Prometheus, used here primarily for macOS monitoring via a bash installer.
-
----
-
-## 🛠️ Deployment Options
-
-### Option A: Docker Compose (Local/Single Node)
-To spin up the entire stack using Docker:
-
-```bash
-cd docker
-docker-compose up -d
+    ECK -->|Manages| ES
+    ECK -->|Manages| KB
+    ECK -->|Manages| FS
+    
+    FS -->|Policy Push| OTEL
+    FS -->|Policy Push| SYNT
+    
+    GEN -->|OTLP| OTEL
+    OTEL -->|Elasticsearch Output| ES
+    SYNT -->|Results| ES
+    ES <--> KB
 ```
 
-**Services:**
-*   Grafana: [http://localhost:3000](http://localhost:3000)
-*   VictoriaMetrics Select: [http://localhost:8481](http://localhost:8481)
-*   Prometheus: [http://localhost:9090](http://localhost:9090)
-*   MKTXP: [http://localhost:49090](http://localhost:49090)
+### 3. GitOps Deployment (ArgoCD)
+The entire infrastructure is managed via an "App of Apps" pattern in ArgoCD.
 
-### Option B: Kubernetes (Cluster Deployment)
-Apply the manifests in order:
+```mermaid
+graph TD
+    subgraph "ArgoCD Control Plane"
+        ROOT[Root Application]
+    end
 
-1.  **VictoriaMetrics Storage**: `kubectl apply -f k8s/victoria-metrics/`
-2.  **MKTXP Credentials**: Edit `k8s/mktxp/secret.yaml` then `kubectl apply -f k8s/mktxp/`
-3.  **Prometheus**: `kubectl apply -f k8s/prometheus/`
-4.  **Grafana**: `kubectl apply -f k8s/grafana/`
-5.  **Portainer (Optional)**: `kubectl apply -f k8s/portainer/`
+    subgraph "ArgoCD Managed Applications"
+        APP_VM[VictoriaMetrics App]
+        APP_PROM[Prometheus App]
+        APP_GRAF[Grafana App]
+        APP_MKTXP[MKTXP App]
+        APP_PORT[Portainer App]
+        APP_ELK[Elastic Stack App]
+    end
+
+    ROOT -->|Syncs| APP_VM
+    ROOT -->|Syncs| APP_PROM
+    ROOT -->|Syncs| APP_GRAF
+    ROOT -->|Syncs| APP_MKTXP
+    ROOT -->|Syncs| APP_PORT
+    ROOT -->|Syncs| APP_ELK
+    
+    APP_ELK -->|Sync Wave -1| ECK_OP[ECK Operator Helm]
+    APP_ELK -->|Sync Wave 0| ELK_RES[Elastic Resources]
+```
 
 ---
 
-## 🖱️ Local macOS Monitoring (vmagent)
+## 🚀 Deployment Overview
 
-A helper script is provided to monitor your local Mac and send data to the VictoriaMetrics cluster.
+### GitOps Strategy (ArgoCD)
+The deployment follows a strictly declarative approach using **ArgoCD**.
+- **Root Application**: Points to `k8s/argocd/apps`, which contains individual `Application` manifests for every component.
+- **Sync Waves**: Used to ensure dependencies are met (e.g., the ECK Operator is installed before the Elasticsearch cluster).
+- **Namespacing**: 
+  - `monitoring`: VictoriaMetrics, Prometheus, Grafana, MKTXP.
+  - `elastic-system`: ECK Operator, Elasticsearch, Kibana, Fleet, Agents.
+  - `argocd`: ArgoCD itself.
 
-```bash
-cd vmagent
-chmod +x install.sh
-./install.sh
-```
-This script downloads `vmagent`, starts `node_exporter` via Homebrew, and begins pushing metrics to `localhost:8480`.
+### Local Development (Docker)
+A `docker-compose.yml` is provided for rapid local testing of the core monitoring stack (VictoriaMetrics, Prometheus, Grafana, MKTXP).
+
+---
+
+## 🛠️ Technical Implementation Details
+
+### VictoriaMetrics & Prometheus Stack
+- **VictoriaMetrics Cluster**: Deployed as a distributed system with separate `vmstorage` (stateful), `vminsert` (stateless ingestion), and `vmselect` (stateless query) components.
+- **Prometheus**: Configured as a "stateless scraper". It does not store data locally but uses `remote_write` to push all metrics to VictoriaMetrics.
+- **MKTXP**: A specialized exporter for MikroTik. In Kubernetes, it uses a template-based `ConfigMap` and `Secret` to dynamically generate its configuration with router credentials.
+- **Grafana Provisioning**: Dashboards and Datasources are automatically provisioned via Kubernetes `ConfigMaps`, ensuring the UI is ready immediately after deployment.
+
+### Elastic Stack (ECK)
+- **Operator-Based**: Uses the ECK Operator to manage the lifecycle of Elasticsearch and Kibana.
+- **Fleet Management**: Implements Elastic Fleet for centralized agent management.
+- **OTel Integration**: Includes an OpenTelemetry (OTel) Collector agent configured via Fleet to receive OTLP data. A dedicated traffic generator (`otel-generator`) is included to simulate real-world telemetry.
+- **Synthetics**: Deployed with an Elastic Synthetics agent for pro-active uptime and performance monitoring.
+
+### Local macOS Monitoring
+The `vmagent` directory contains a specialized setup for macOS:
+- `install.sh`: Automated script to set up `node_exporter` and `vmagent`.
+- `vmagent`: Acting as a lightweight scraper on the host, pushing metrics to the central VictoriaMetrics cluster via the remote-write API.
 
 ---
 
 ## 📋 Port Reference Table
 
-| Component | Port | Description |
-| :--- | :--- | :--- |
-| **Grafana** | 3000 | Dashboard UI |
-| **VictoriaMetrics Insert** | 8480 | Data Ingestion (Prometheus Remote Write) |
-| **VictoriaMetrics Select** | 8481 | Query API (Grafana Datasource) |
-| **VictoriaMetrics Storage** | 8482 | Storage Health/UI |
-| **Prometheus** | 9090 | Scraper UI |
-| **MKTXP** | 49090 | MikroTik Metrics Endpoint |
-| **vmagent** | 8429 | Agent Health/UI |
-| **Portainer** | 9000 | Container Management (K8s) |
+| Component | Port | Namespace | Description |
+| :--- | :--- | :--- | :--- |
+| **Grafana** | 3000 | monitoring | Visualization UI |
+| **VictoriaMetrics Insert** | 8480 | monitoring | Data Ingestion API |
+| **VictoriaMetrics Select** | 8481 | monitoring | Query API (PromQL compatible) |
+| **Prometheus** | 9090 | monitoring | Scraper UI |
+| **Kibana** | 5601 | elastic-system | Elastic UI (LoadBalancer) |
+| **Elasticsearch** | 9200 | elastic-system | Search & Analytics API |
+| **Fleet Server** | 8220 | elastic-system | Agent Management |
+| **OTel Collector** | 8200 | elastic-system | OTLP Ingestion |
+| **Portainer** | 9000 | monitoring | K8s Management UI |
+| **MKTXP** | 49090 | monitoring | MikroTik Metrics |
 
 ---
 
 ## ⚙️ Configuration Files
-*   `docker/prometheus/prometheus.yml`: Scrape jobs and remote write URL.
-*   `docker/mktxp/mktxp.conf`: MikroTik connection details.
-*   `k8s/mktxp/secret.yaml`: Kubernetes secrets for router credentials.
-*   `vmagent/vmagent-conf.yml`: Local scrape configuration for `node_exporter`.
+- `k8s/argocd/root-application.yaml`: The entry point for the entire deployment.
+- `k8s/prometheus/prometheus-config.yaml`: Scrape jobs for Kubernetes and exporters.
+- `k8s/elastic-stack/deploy/elastic-stack.yaml`: Definitions for ES, Kibana, and Fleet.
+- `docker/mktxp/mktxp.conf`: Configuration template for MikroTik metrics.
