@@ -30,7 +30,7 @@ until kubectl -n argocd get secret argocd-initial-admin-secret > /dev/null 2>&1;
 done
 
 echo "---------------------------------------------------"
-echo "ArgoCD Installation FIXED."
+echo "ArgoCD Installation."
 echo "---------------------------------------------------"
 echo "Login: admin"
 echo "Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)"
