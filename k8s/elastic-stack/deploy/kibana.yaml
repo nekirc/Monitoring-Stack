@@ -41,13 +41,6 @@ spec:
       - name: Synthetics Policy
         id: eck-synthetics-policy
         namespace: default
-        package_policies:
-          - name: system-2
-            package:
-              name: system
-          - name: synthetics-1
-            package:
-              name: synthetics
 
       - name: APM and OTel Policy
         id: eck-apm-otel-policy
