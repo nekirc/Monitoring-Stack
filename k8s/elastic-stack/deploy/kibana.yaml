@@ -19,6 +19,14 @@ spec:
         is_default_monitoring: true
         config:
           ssl.verification_mode: none
+    
+    xpack.fleet.packages:
+      - name: fleet_server
+        version: latest
+      - name: system
+        version: latest
+      - name: apm
+        version: latest
 
     xpack.fleet.agentPolicies:
       - name: Fleet Server Policy
@@ -26,9 +34,6 @@ spec:
         is_default_fleet_server: true
         namespace: default
         package_policies:
-          - name: system-1
-            package:
-              name: system
           - name: fleet_server-1
             package:
               name: fleet_server
@@ -42,9 +47,6 @@ spec:
         id: eck-apm-otel-policy
         namespace: default
         package_policies:
-          - name: system-3
-            package:
-              name: system
           - name: apm-integration
             package:
               name: apm
