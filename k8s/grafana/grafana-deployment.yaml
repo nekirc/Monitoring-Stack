@@ -60,16 +60,3 @@ spec:
       - name: grafana-provisioning
         configMap:
           name: grafana-provisioning
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: grafana
-  namespace: monitoring
-spec:
-  type: LoadBalancer
-  ports:
-    - port: 3000
-  selector:
-    app: grafana
-

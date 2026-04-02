@@ -1,25 +1,25 @@
 apiVersion: agent.k8s.elastic.co/v1alpha1
 kind: Agent
 metadata:
-  name: otel-collector
+  name: fleet-server
   namespace: elastic-system
 spec:
   version: 9.3.2
   kibanaRef:
     name: kibana
-  fleetServerRef: 
-    name: fleet-server
+  elasticsearchRefs:
+    - name: elasticsearch
   mode: fleet
-  policyID: eck-apm-otel-policy
+  fleetServerEnabled: true
+  policyID: eck-fleet-server
   deployment:
     replicas: 1
     podTemplate:
       spec:
+        serviceAccountName: fleet-server
+        automountServiceAccountToken: true
         containers:
           - name: agent
             env:
-              - name: FLEET_INSECURE
-                value: "true"
-            ports:
-              - containerPort: 8200
-                name: apm-otlp
+            - name: FLEET_INSECURE
+              value: "true"
