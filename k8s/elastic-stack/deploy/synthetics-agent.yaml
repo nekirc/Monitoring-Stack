@@ -20,3 +20,6 @@ spec:
             env:
             - name: FLEET_INSECURE
               value: "true"
+        volumes:
+          - name: agent-data
+            emptyDir: {}
