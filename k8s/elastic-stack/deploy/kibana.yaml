@@ -43,6 +43,14 @@ spec:
                   - name: custom_port
                     value: 8220
 
+      - name: Synthetics Agent Policy
+        id: eck-synthetics-policy
+        namespace: default
+        package_policies:
+          - name: system
+            package:
+              name: system
+            
       - name: APM and OTel Policy
         id: eck-apm-otel-policy
         namespace: default
