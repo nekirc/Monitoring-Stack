@@ -50,7 +50,14 @@ spec:
           - name: system
             package:
               name: system
-            
+          - inputs:
+              - type: system
+                vars:
+                  - name: host
+                    value: "0.0.0.0:8220"
+                  - name: tls_enabled
+                    value: false
+
       - name: APM and OTel Policy
         id: eck-apm-otel-policy
         namespace: default
