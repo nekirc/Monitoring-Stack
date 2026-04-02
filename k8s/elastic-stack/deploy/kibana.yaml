@@ -34,9 +34,6 @@ spec:
         is_default_fleet_server: true
         namespace: default
         package_policies:
-          - name: system-1
-            package:
-              name: system
           - name: fleet_server-1
             package:
               name: fleet_server
