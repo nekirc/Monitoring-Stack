@@ -34,6 +34,9 @@ spec:
         is_default_fleet_server: true
         namespace: default
         package_policies:
+          - name: system-1
+            package:
+              name: system
           - name: fleet_server-1
             package:
               name: fleet_server
@@ -47,16 +50,9 @@ spec:
         id: eck-synthetics-policy
         namespace: default
         package_policies:
-          - name: system
+          - name: system-synthetics
             package:
               name: system
-          - inputs:
-              - type: system
-                vars:
-                  - name: host
-                    value: "0.0.0.0:8220"
-                  - name: tls_enabled
-                    value: false
 
       - name: APM and OTel Policy
         id: eck-apm-otel-policy
