@@ -8,6 +8,13 @@ spec:
   count: 1
   elasticsearchRef:
     name: elasticsearch
+  monitoring:
+    metrics:
+      elasticsearchRefs:
+        - name: elasticsearch
+    logs:
+      elasticsearchRefs:
+        - name: elasticsearch
   config:
     xpack.fleet.agents.fleet_server.hosts: ["https://fleet-server-agent-http.elastic-system.svc:8220"]
     xpack.fleet.outputs:

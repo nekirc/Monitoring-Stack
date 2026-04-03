@@ -5,6 +5,13 @@ metadata:
   namespace: elastic-system
 spec:
   version: 9.3.2
+  monitoring:
+    metrics:
+      elasticsearchRefs:
+        - name: elasticsearch
+    logs:
+      elasticsearchRefs:
+        - name: elasticsearch
   nodeSets:
   - name: default
     count: 2
