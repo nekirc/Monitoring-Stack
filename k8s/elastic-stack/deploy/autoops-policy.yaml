@@ -1,0 +1,12 @@
+apiVersion: autoops.k8s.elastic.co/v1alpha1
+kind: AutoOpsAgentPolicy
+metadata:
+  name: eck-autoops-policy
+  namespace: elastic-system
+spec:
+  version: 9.3.2
+  resourceSelector:
+    matchLabels:
+      autoops: enabled
+  autoOpsRef:
+    secretName: autoops-secret

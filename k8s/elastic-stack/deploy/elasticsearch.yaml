@@ -3,6 +3,8 @@ kind: Elasticsearch
 metadata:
   name: elasticsearch
   namespace: elastic-system
+  labels:
+    autoops: enabled
 spec:
   version: 9.3.2
   monitoring:
