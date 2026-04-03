@@ -22,3 +22,7 @@ spec:
             env:
             - name: FLEET_INSECURE
               value: "true"
+            resources:
+              requests:
+                memory: 150Mi
+                cpu: 100m
