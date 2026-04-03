@@ -10,6 +10,16 @@ spec:
     count: 2
     config:
       node.store.allow_mmap: false
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 0.5
+            limits:
+              memory: 1Gi
     volumeClaimTemplates:
     - metadata:
         name: elasticsearch-data

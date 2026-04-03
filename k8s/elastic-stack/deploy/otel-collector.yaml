@@ -23,6 +23,10 @@ spec:
             ports:
               - containerPort: 8200
                 name: apm-otlp
+            resources:
+              requests:
+                memory: 150Mi
+                cpu: 100m
         volumes:
           - name: agent-data
             emptyDir: {}
