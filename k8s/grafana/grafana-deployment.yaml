@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      securityContext:
+        fsGroup: 472
+        runAsUser: 472
+      initContainers:
+      - name: download-dashboards
+        image: curlimages/curl:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            mkdir -p /var/lib/grafana/dashboards
+            for id in 19268 18283 11176 13679 14584 20138; do
+              echo "Downloading dashboard $id..."
+              curl -sL "https://grafana.com/api/dashboards/$id/revisions/1/download" -o "/var/lib/grafana/dashboards/$id.json"
+              # Ensure all datasource template variables in the JSON are set to VictoriaMetrics
+              sed -i 's/\${DS_[A-Z_]*}/VictoriaMetrics/g' "/var/lib/grafana/dashboards/$id.json"
+              sed -i 's/"datasource": "Prometheus"/"datasource": "VictoriaMetrics"/g' "/var/lib/grafana/dashboards/$id.json"
+            done
+        volumeMounts:
+        - name: dashboards-storage
+          mountPath: /var/lib/grafana/dashboards
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+          - containerPort: 3000
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: dashboards-storage
+          mountPath: /var/lib/grafana/dashboards
+        - name: grafana-provisioning
+          mountPath: /etc/grafana/provisioning/datasources/datasources.yaml
+          subPath: datasources.yaml
+          readOnly: true
+        - name: grafana-provisioning
+          mountPath: /etc/grafana/provisioning/dashboards/dashboards.yaml
+          subPath: dashboards.yaml
+          readOnly: true
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-pvc
+      - name: dashboards-storage
+        emptyDir: {}
+      - name: grafana-provisioning
+        configMap:
+          name: grafana-provisioning

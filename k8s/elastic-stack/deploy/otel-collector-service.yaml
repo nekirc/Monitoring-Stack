@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector-svc
+  namespace: elastic-system
+spec:
+  selector:
+    agent.k8s.elastic.co/name: otel-collector
+  ports:
+    - name: otlp
+      port: 8200
+      targetPort: 8200

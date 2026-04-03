@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmselect
+spec:
+  replicas: 2 # Scale this up for faster dashboard loading
+  selector:
+    matchLabels:
+      app: vmselect
+  template:
+    metadata:
+      labels:
+        app: vmselect
+    spec:
+      containers:
+      - name: vmselect
+        image: victoriametrics/vmselect:latest
+        args: 
+          - "--storageNode=vmstorage-0.vmstorage:8401"
+          - "--storageNode=vmstorage-1.vmstorage:8401"
+        ports:
+          - containerPort: 8481

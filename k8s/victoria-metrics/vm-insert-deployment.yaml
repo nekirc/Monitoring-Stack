@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vminsert
+spec:
+  replicas: 2 # Scale this up in Portainer if ingestion is slow
+  selector:
+    matchLabels:
+      app: vminsert
+  template:
+    metadata:
+      labels:
+        app: vminsert
+    spec:
+      containers:
+      - name: vminsert
+        image: victoriametrics/vminsert:latest
+        args: 
+          - "--storageNode=vmstorage-0.vmstorage:8400"
+          - "--storageNode=vmstorage-1.vmstorage:8400"
+          - "--replicationFactor=2"
+        ports:
+          - containerPort: 8480
