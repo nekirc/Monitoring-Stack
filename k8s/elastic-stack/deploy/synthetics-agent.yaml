@@ -5,6 +5,8 @@ metadata:
   namespace: elastic-system
 spec:
   version: 9.3.2
+  kibanaRef:
+    name: kibana
   fleetServerRef:
     name: fleet-server
   mode: fleet
